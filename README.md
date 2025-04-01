@@ -1,0 +1,1 @@
+A Sports Management Platform for managing Professional Sports Teams in terms of budgeting, player contracts, and employees
