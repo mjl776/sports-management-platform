@@ -4,7 +4,7 @@ type Team struct {
 	ID string `json:"id"`
 	Name string `json:"name"`
 	Players map[string]*Player `json:"player"`
-	Employee map[string]*Employee `json:"employee"`
+	Employees map[string]*Employee `json:"employees"`
 	Budget int64 `json:"budget"` // temporary place holder
 }
 
