@@ -5,7 +5,7 @@ type Team struct {
 	Name string `json:"name"`
 	Players map[string]*Player `json:"player"`
 	Employees map[string]*Employee `json:"employees"`
-	Budget int64 `json:"budget"` // temporary place holder
+	Budget float64 `json:"budget"` // temporary place holder
 }
 
 type Player struct {
@@ -20,3 +20,12 @@ type Employee struct {
 	// other properties to be determined
 }
 
+func createNewTeam(ID, Name string, Players map[string]*Player, Employees map[string]*Employee, Budget float64) *Team {
+	return &Team {
+		ID:ID,
+		Name: Name,
+		Players: Players,
+		Employees: Employees,
+		Budget: Budget,
+	}
+}
