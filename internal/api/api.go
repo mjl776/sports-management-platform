@@ -22,4 +22,5 @@ func (s *APIServer) Run() {
 	err := http.ListenAndServe(s.listenAddr, router)
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
-	}}
+	}
+}
