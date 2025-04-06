@@ -5,4 +5,4 @@ run: build
 	@./bin/nj-online-sports-store
 
 test:
-	@go test -v ./...Make
+	@go test ./...
