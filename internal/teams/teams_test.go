@@ -45,5 +45,17 @@ func TestPlayerIntialization(t *testing.T) {
 	if (mockPlayer.Name != "Jalen Brunson") {
 		t.Errorf("expected player ID to be 'testing123', got '%s'", mockPlayer.Name)
 	}
-	
+
+}
+
+func TestNewEmployeeIntialization(t *testing.T) {
+	mockEmployee := createNewEmployee("testId123", "John Smith")
+
+	if (mockEmployee.ID != "testId123") {
+		t.Errorf("expected employee ID to be 'testing123', got '%s'", mockEmployee.ID)
+	}
+
+	if (mockEmployee.Name != "John Smith") {
+		t.Errorf("expected player ID to be 'testing123', got '%s'", mockEmployee.Name)
+	}
 }
