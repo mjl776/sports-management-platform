@@ -33,5 +33,4 @@ func TestTeamInitialization(t *testing.T) {
 		t.Errorf("expected team to be 'Denver Broncos', got '%f'", mockTeam.Budget)
 	}
 
-
 }
