@@ -21,11 +21,18 @@ type Employee struct {
 }
 
 func createNewTeam(ID, Name string, Players map[string]*Player, Employees map[string]*Employee, Budget float64) *Team {
-	return &Team {
-		ID:ID,
+	return &Team{
+		ID: ID,
 		Name: Name,
 		Players: Players,
 		Employees: Employees,
 		Budget: Budget,
+	}
+}
+
+func createNewPlayer(ID, Name string) *Player {
+	return &Player{
+		ID: ID,
+		Name: Name,
 	}
 }
