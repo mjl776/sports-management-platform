@@ -36,3 +36,10 @@ func createNewPlayer(ID, Name string) *Player {
 		Name: Name,
 	}
 }
+
+func createNewEmployee(ID, Name string) *Employee {
+	return &Employee{
+		ID: ID,
+		Name: Name,
+	}
+}
