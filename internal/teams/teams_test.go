@@ -34,3 +34,16 @@ func TestTeamInitialization(t *testing.T) {
 	}
 
 }
+
+func TestPlayerIntialization(t *testing.T) {
+	mockPlayer := createNewPlayer("testId123", "Jalen Brunson")
+
+	if (mockPlayer.ID != "testId123") {
+		t.Errorf("expected player ID to be 'testing123', got '%s'", mockPlayer.ID)
+	}
+
+	if (mockPlayer.Name != "Jalen Brunson") {
+		t.Errorf("expected player ID to be 'testing123', got '%s'", mockPlayer.Name)
+	}
+	
+}
