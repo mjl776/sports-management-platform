@@ -2,32 +2,31 @@ package teams
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
 )
 
+type Team struct {
+	Name string `json:"name"`
+	LeagueID int `json:"league_id"`
+}
+
 type TeamsService struct {
 	db *sql.DB
 }
 
-type Team struct {
-	ID string `json:"id"`
-	Name string `json:"name"`
-	LeagueID string `json:"league_id"`
-}
-
-func NewTeamObject(id string, name string, leagueId string) *Team {
-	return &Team{
-		ID: id,
-		Name: name,
-		LeagueID: leagueId,
+func NewTeamsService(db *sql.DB) *TeamsService {
+	return &TeamsService {
+		db: db,
 	}
 }
 
-func NewTeamsService(db *sql.DB) *TeamsService {
-	return &TeamsService{
-		db: db,
+func NewTeamObject(name string, leagueId int) *Team {
+	return &Team{
+		Name: name,
+		LeagueID: leagueId,
 	}
 }
 
@@ -56,13 +55,16 @@ func (s *TeamsService) CreateTeam(team Team) error {
 	VALUES ($1, $2)
 	RETURNING id;
 	`
+	var teamID int
+	fmt.Println("Creating team with name:", team.Name, "and league ID:", team.LeagueID)
 
-	err := s.db.QueryRow(insertTeamSQL, team.Name, team.LeagueID).Scan(&team.ID)
+	// Execute the SQL statement
+	err := s.db.QueryRow(insertTeamSQL, team.Name, team.LeagueID).Scan(&teamID)
 	if err != nil {
 		log.Fatalf("Failed to create team: %v", err)
 		return err
 	}
 
-	log.Printf("Team created successfully with ID: %s", team.ID)
+	log.Printf("Team created successfully with Name: %s", team.Name)
 	return nil
 }

@@ -8,7 +8,7 @@ import (
 
 
 type League struct {
-	ID string  `json:"id"`
+	ID int  `json:"id"`
 	Name string `json:"name"`
 	Sport string `json:"sport"`
 }
@@ -23,10 +23,8 @@ func NewLeagueService(db *sql.DB) *LeagueService {
 	}
 }
 
-
-func NewLeagueObject(id, name, sport string) *League {
+func NewLeagueObject(name, sport string) *League {
 	return &League{
-		ID: id,
 		Name: name,
 		Sport: sport,
 	}
