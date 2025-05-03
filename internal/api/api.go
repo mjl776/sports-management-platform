@@ -16,7 +16,7 @@ type APIServer struct {
 	listenAddr     string
 	leagueService *leagues.LeagueService
 	teamsService *teams.TeamsService
-	employeesService *employees.EmployeesService
+	employeesService *employees.TeamEmployeesService
 	usersService *users.UserService
 }
 
@@ -30,6 +30,14 @@ type CreateLeagueReqObject struct {
 	Sport string `json:"sport"`
 }
 
+type CreatTeamEmployeeReqObject struct {
+	EmployeeName string `json:"employee_name"`
+	EmployeeTitle string `json:"employee_title"`
+	SalaryPerHour string `json:"salary_per_hour"`
+	EmployerID string `json:"employer_id"`
+}
+
+
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/json")
@@ -39,7 +47,7 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 func NewAPIServer(listenAddr string,
 		leaguesService *leagues.LeagueService,
 		teamsService *teams.TeamsService,
-		employeesService *employees.EmployeesService,
+		teamsEmployeesService *employees.TeamEmployeesService,
 		usersService *users.UserService,
 	) *APIServer {
 	return &APIServer{
@@ -94,6 +102,24 @@ func (s *APIServer) handleCreateLeague(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, league)
+}
+
+func (s *APIServer) handleCreateEmployee(c *gin.Context) {
+	var req CreatTeamEmployeeReqObject
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	employee := employees.NewTeamEmployeesObject(req.EmployeeName, req.EmployeeTitle, req.SalaryPerHour, req.EmployerID)
+	err := s.employeesService.CreateEmployee(*employee)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee"})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, employee)
 }
 
 // func generateSecureRandomID(length int) (string, error) {

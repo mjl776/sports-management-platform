@@ -43,7 +43,7 @@ func main() {
     teamsService := teams.NewTeamsService(db)
     leaguesService := leagues.NewLeagueService(db)
 	usersService := users.NewUserService(db)
-	employeeService := employees.NewEmployeesService(db)
+	employeeService := employees.NewTeamEmployeesService(db)
 
     // Create the leagues table
     if err := leaguesService.CreateLeaguesTable(); err != nil {
@@ -56,7 +56,7 @@ func main() {
     }
 
 	// Create the employees table
-	if err := employeeService.CreateEmployeesTable(); err != nil {
+	if err := employeeService.CreateTeamsEmployeesTable(); err != nil {
 		log.Fatalf("Failed to create employees table: %v", err)
 	}
 

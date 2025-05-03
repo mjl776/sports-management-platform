@@ -37,8 +37,7 @@ func (s *UserService) CreateUsersTable() error {
 		uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		user_status VARCHAR(30) NOT NULL,
 		employee_id VARCHAR(30) NOT NULL,
-        password_hash TEXT NOT NULL,
-		FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+        password_hash TEXT NOT NULL
 	)`
 
 	_, err := s.db.Exec(createUserTableQuery)
