@@ -14,8 +14,8 @@ type TeamEmployees struct {
 	CreatedAt  string `json:"created_at"`
 	UpdatedAt  string `json:"updated_at"`
 	EmployeeTitle string `json:"employee_title"`
-	SalaryPerHour string `json:"salary_per_hour"`
-	EmployerID string `json:"employer_id"`
+	SalaryPerHour float64 `json:"salary_per_hour"`
+	EmployerID int `json:"employer_id"`
 }
 
 type TeamEmployeesService struct {
@@ -28,9 +28,9 @@ func NewTeamEmployeesService(db *sql.DB) *TeamEmployeesService {
 	}
 }
 
-func NewTeamEmployeesObject(employeeName, employeeTitle, salaryPerHour, employerID string) *TeamEmployees {
+func NewTeamEmployeesObject(employeeName string, employeeTitle string, salaryPerHour float64, employerID int) *TeamEmployees {
 	return &TeamEmployees{
-		EmployeeName: "t" + employeeName, // preface employeeID with a 't' to indicate team employee
+		EmployeeName: employeeName,
 		EmployeeTitle: employeeTitle,
 		SalaryPerHour: salaryPerHour,
 		EmployerID: employerID,
@@ -60,15 +60,20 @@ func (s *TeamEmployeesService) CreateTeamsEmployeesTable() error {
 }
 
 func (s *TeamEmployeesService) CreateEmployee(employee TeamEmployees) error {
+	// Print current employee
+	fmt.Println("Creating employee with name:", employee.EmployeeName,
+	 "and title:", employee.EmployeeTitle,
+	 "and salary:", employee.SalaryPerHour, "and employer ID:", employee.EmployerID)
+
 	insertEmployeeQuery := `
-	INSERT INTO employees (employee_id, employee_name, created_at, updated_at, employee_title, salary_per_hour, employer_id)
-	VALUES ($1, $2, $3, $4, $5, $6)
+	INSERT INTO team_employees (employee_id, employee_name, created_at, updated_at, employee_title, salary_per_hour, employer_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	RETURNING employee_id;`
 
 	currentTimestamp := time.Now().Format("2006-01-02 15:04:05")
 	employeeID := generateRandomEmployeeID()
 
-	err := s.db.QueryRow(insertEmployeeQuery, employeeID, employee.EmployeeName,
+	err := s.db.QueryRow(insertEmployeeQuery, "t" + employeeID, employee.EmployeeName,
 		currentTimestamp, currentTimestamp, employee.EmployeeTitle, employee.SalaryPerHour, employee.EmployerID).Scan(&employeeID)
 	if err != nil {
 		return err

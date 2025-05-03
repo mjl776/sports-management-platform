@@ -7,4 +7,12 @@ Testing:
 
 To test post routes
 
-curl localhost:3000/create-team --include --header “Content-Type: application/json” -d @body.json --request “POST”
+Test
+
+Create Team Test Curl Request
+
+curl localhost:3000/create-team --include --header "Content-Type: application/json" -d @test/teams_test_create.json --request "POST"
+
+Create Teams Employee Curl Request
+
+curl localhost:3000/create-team-employee --include --header "Content-Type: application/json" -d @test/new_employee_test_create.json --request "POST"

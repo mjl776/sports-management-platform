@@ -43,7 +43,7 @@ func main() {
     teamsService := teams.NewTeamsService(db)
     leaguesService := leagues.NewLeagueService(db)
 	usersService := users.NewUserService(db)
-	employeeService := employees.NewTeamEmployeesService(db)
+	teamsEmployeeService := employees.NewTeamEmployeesService(db)
 
     // Create the leagues table
     if err := leaguesService.CreateLeaguesTable(); err != nil {
@@ -56,7 +56,7 @@ func main() {
     }
 
 	// Create the employees table
-	if err := employeeService.CreateTeamsEmployeesTable(); err != nil {
+	if err := teamsEmployeeService.CreateTeamsEmployeesTable(); err != nil {
 		log.Fatalf("Failed to create employees table: %v", err)
 	}
 
@@ -65,7 +65,7 @@ func main() {
 		log.Fatalf("Failed to create users table: %v", err)
 	}
 
-    server := api.NewAPIServer(":3000", leaguesService, teamsService, employeeService, usersService);
+    server := api.NewAPIServer(":3000", leaguesService, teamsService, teamsEmployeeService, usersService);
     server.Run();
 
 }

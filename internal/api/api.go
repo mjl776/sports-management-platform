@@ -16,7 +16,7 @@ type APIServer struct {
 	listenAddr     string
 	leagueService *leagues.LeagueService
 	teamsService *teams.TeamsService
-	employeesService *employees.TeamEmployeesService
+	teamEmployeesService *employees.TeamEmployeesService
 	usersService *users.UserService
 }
 
@@ -33,8 +33,8 @@ type CreateLeagueReqObject struct {
 type CreatTeamEmployeeReqObject struct {
 	EmployeeName string `json:"employee_name"`
 	EmployeeTitle string `json:"employee_title"`
-	SalaryPerHour string `json:"salary_per_hour"`
-	EmployerID string `json:"employer_id"`
+	SalaryPerHour float64 `json:"salary_per_hour"`
+	EmployerID int `json:"employer_id"`
 }
 
 
@@ -47,13 +47,15 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 func NewAPIServer(listenAddr string,
 		leaguesService *leagues.LeagueService,
 		teamsService *teams.TeamsService,
-		teamsEmployeesService *employees.TeamEmployeesService,
+		teamEmployeesService *employees.TeamEmployeesService,
 		usersService *users.UserService,
 	) *APIServer {
 	return &APIServer{
 		listenAddr:     listenAddr,
 		leagueService: leaguesService,
+		teamEmployeesService: teamEmployeesService,
 		teamsService: teamsService,
+		usersService: usersService,
 	}
 }
 
@@ -62,6 +64,7 @@ func (s *APIServer) Run() {
 	router := gin.Default()
 	router.POST("/create-team", s.handleCreateTeam)
 	router.POST("/create-league", s.handleCreateLeague)
+	router.POST("/create-team-employee", s.handleCreateTeamEmployee)
 	log.Println("JSON API server running on port: ", s.listenAddr)
 	err := http.ListenAndServe(s.listenAddr, router)
 
@@ -104,7 +107,7 @@ func (s *APIServer) handleCreateLeague(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, league)
 }
 
-func (s *APIServer) handleCreateEmployee(c *gin.Context) {
+func (s *APIServer) handleCreateTeamEmployee(c *gin.Context) {
 	var req CreatTeamEmployeeReqObject
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -112,10 +115,10 @@ func (s *APIServer) handleCreateEmployee(c *gin.Context) {
 	}
 
 	employee := employees.NewTeamEmployeesObject(req.EmployeeName, req.EmployeeTitle, req.SalaryPerHour, req.EmployerID)
-	err := s.employeesService.CreateEmployee(*employee)
+	err := s.teamEmployeesService.CreateEmployee(*employee)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee."})
 		return
 	}
 
