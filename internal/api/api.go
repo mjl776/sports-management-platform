@@ -6,14 +6,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mjl776/sports-management-platform/internal/employees"
 	"github.com/mjl776/sports-management-platform/internal/leagues"
 	"github.com/mjl776/sports-management-platform/internal/teams"
+	"github.com/mjl776/sports-management-platform/internal/users"
 )
 
 type APIServer struct {
 	listenAddr     string
 	leagueService *leagues.LeagueService
 	teamsService *teams.TeamsService
+	employeesService *employees.EmployeesService
+	usersService *users.UserService
 }
 
 type CreateTeamReqObject struct {
@@ -32,7 +36,12 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	return json.NewEncoder(w).Encode(v)
 }
 
-func NewAPIServer(listenAddr string, leaguesService *leagues.LeagueService, teamsService *teams.TeamsService) *APIServer {
+func NewAPIServer(listenAddr string,
+		leaguesService *leagues.LeagueService,
+		teamsService *teams.TeamsService,
+		employeesService *employees.EmployeesService,
+		usersService *users.UserService,
+	) *APIServer {
 	return &APIServer{
 		listenAddr:     listenAddr,
 		leagueService: leaguesService,
