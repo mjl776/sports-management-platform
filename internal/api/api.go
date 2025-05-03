@@ -1,24 +1,42 @@
 package api
 
 import (
-	"bufio"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-    "github.com/mjl776/sports-management-platform/internal/leagues"
+	"github.com/gin-gonic/gin"
+	"github.com/mjl776/sports-management-platform/internal/employees"
+	"github.com/mjl776/sports-management-platform/internal/leagues"
 	"github.com/mjl776/sports-management-platform/internal/teams"
+	"github.com/mjl776/sports-management-platform/internal/users"
 )
 
 type APIServer struct {
-	listenAddr  string
-	teamService *teams.TeamsService
-    leaguesService *leagues.LeagueService
+	listenAddr     string
+	leagueService *leagues.LeagueService
+	teamsService *teams.TeamsService
+	teamEmployeesService *employees.TeamEmployeesService
+	usersService *users.UserService
 }
+
+type CreateTeamReqObject struct {
+	Name string `json:"name"`
+	LeagueID int `json:"league_id"`
+}
+
+type CreateLeagueReqObject struct {
+	Name string `json:"name"`
+	Sport string `json:"sport"`
+}
+
+type CreatTeamEmployeeReqObject struct {
+	EmployeeName string `json:"employee_name"`
+	EmployeeTitle string `json:"employee_title"`
+	SalaryPerHour float64 `json:"salary_per_hour"`
+	EmployerID int `json:"employer_id"`
+}
+
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.WriteHeader(status)
@@ -26,89 +44,92 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	return json.NewEncoder(w).Encode(v)
 }
 
-func NewAPIServer(listenAddr string, teamService *teams.TeamsService, leagueService *leagues.LeagueService) *APIServer {
+func NewAPIServer(listenAddr string,
+		leaguesService *leagues.LeagueService,
+		teamsService *teams.TeamsService,
+		teamEmployeesService *employees.TeamEmployeesService,
+		usersService *users.UserService,
+	) *APIServer {
 	return &APIServer{
-		listenAddr:  listenAddr,
-		teamService: teamService,
-        leaguesService: leagueService,
+		listenAddr:     listenAddr,
+		leagueService: leaguesService,
+		teamEmployeesService: teamEmployeesService,
+		teamsService: teamsService,
+		usersService: usersService,
 	}
 }
 
 func (s *APIServer) Run() {
 
-	router := http.NewServeMux()
-	router.HandleFunc("/create-team", s.handleCreateTeam)
-    router.HandleFunc("/create-league", s.handleCreateLeague)
+	router := gin.Default()
+	router.POST("/create-team", s.handleCreateTeam)
+	router.POST("/create-league", s.handleCreateLeague)
+	router.POST("/create-team-employee", s.handleCreateTeamEmployee)
 	log.Println("JSON API server running on port: ", s.listenAddr)
 	err := http.ListenAndServe(s.listenAddr, router)
+
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
 
-func (s *APIServer) handleCreateTeam(w http.ResponseWriter, r *http.Request) {
+func (s *APIServer) handleCreateTeam(c *gin.Context) {
 
-	scanner := bufio.NewScanner(os.Stdin)
-
-    if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "Error during scan:", err)
+	var req CreateTeamReqObject
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	fmt.Println("Enter your team name!")
-	scanner.Scan()
-	teamName := scanner.Text()
+	team := teams.NewTeamObject(req.Name, req.LeagueID);
+	err := s.teamsService.CreateTeam(*team)
 
-	fmt.Println("Enter your league Id!")
-	scanner.Scan()
-	leagueId := scanner.Text()
-
-	teamId, err := generateSecureRandomID(16)
-
-    if err != nil {
-        fmt.Fprintln(os.Stderr, "Error generating ID:", err)
-    }
-
-	team := teams.NewTeamObject(teamId, teamName, leagueId)
-	err = s.teamService.CreateTeam(*team)
-
-	WriteJSON(w, http.StatusOK, team)
-}
-
-func (s *APIServer) handleCreateLeague(w http.ResponseWriter, r *http.Request) {
-
-	scanner := bufio.NewScanner(os.Stdin)
-
-    if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "Error during scan:", err)
-		return
-	}
-
-	fmt.Println("Enter your league name!")
-	scanner.Scan()
-	leagueName := scanner.Text()
-
-	fmt.Println("Enter your sport!")
-	scanner.Scan()
-	leagueSport := scanner.Text()
-
-	leagueId, err := generateSecureRandomID(16)
-
-    if err != nil {
-        fmt.Fprintln(os.Stderr, "Error generating ID:", err)
-    }
-
-	league := leagues.NewLeagueObject(leagueId, leagueName, leagueSport);
-	err = s.leaguesService.CreateLeague(*league)
-
-	WriteJSON(w, http.StatusOK, league)
-}
-
-func generateSecureRandomID(length int) (string, error) {
-	bytes := make([]byte, length)
-	_, err := rand.Read(bytes)
 	if err != nil {
-		return "", err
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create team"})
+		return
 	}
-	return base64.URLEncoding.EncodeToString(bytes), nil
+
+	c.IndentedJSON(http.StatusOK, team)
 }
+
+func (s *APIServer) handleCreateLeague(c *gin.Context) {
+
+	var req CreateLeagueReqObject
+
+	league := leagues.NewLeagueObject(req.Name, req.Sport)
+	err := s.leagueService.CreateLeague(*league)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create league"})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, league)
+}
+
+func (s *APIServer) handleCreateTeamEmployee(c *gin.Context) {
+	var req CreatTeamEmployeeReqObject
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	employee := employees.NewTeamEmployeesObject(req.EmployeeName, req.EmployeeTitle, req.SalaryPerHour, req.EmployerID)
+	err := s.teamEmployeesService.CreateEmployee(*employee)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee."})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, employee)
+}
+
+// func generateSecureRandomID(length int) (string, error) {
+// 	bytes := make([]byte, length)
+// 	_, err := rand.Read(bytes)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return base64.URLEncoding.EncodeToString(bytes), nil
+// }
