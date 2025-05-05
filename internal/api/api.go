@@ -37,6 +37,16 @@ type CreatTeamEmployeeReqObject struct {
 	EmployerID int `json:"employer_id"`
 }
 
+type CreateUserReqObject struct {
+	UserStatus string `json:"user_status"`
+	EmployeeId string `json:"employee_id"`
+	Password string `json:"password"`
+}
+
+type LoginReqObject struct {
+	EmployeeId string `json:"employee_id"`
+	Password string `json:"password"`
+}
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.WriteHeader(status)
@@ -65,6 +75,8 @@ func (s *APIServer) Run() {
 	router.POST("/create-team", s.handleCreateTeam)
 	router.POST("/create-league", s.handleCreateLeague)
 	router.POST("/create-team-employee", s.handleCreateTeamEmployee)
+	router.POST("/create-user", s.handleCreateUser)
+	router.POST("/login", s.handleLogin)
 	log.Println("JSON API server running on port: ", s.listenAddr)
 	err := http.ListenAndServe(s.listenAddr, router)
 
@@ -85,7 +97,7 @@ func (s *APIServer) handleCreateTeam(c *gin.Context) {
 	err := s.teamsService.CreateTeam(*team)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create team"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create team"})
 		return
 	}
 
@@ -118,12 +130,51 @@ func (s *APIServer) handleCreateTeamEmployee(c *gin.Context) {
 	err := s.teamEmployeesService.CreateEmployee(*employee)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create employee."})
 		return
 	}
 
 	c.IndentedJSON(http.StatusOK, employee)
 }
+
+func (s *APIServer) handleCreateUser(c *gin.Context) {
+	var req CreateUserReqObject
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	log.Printf("UserStatus: %s, EmployeeID: %s, Password: %s", req.UserStatus, req.EmployeeId, req.Password)
+
+	user := users.NewUserObject(req.UserStatus, req.EmployeeId, req.Password)
+	err := s.usersService.CreateUser(*user)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create user."})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, user)
+}
+
+
+func (s *APIServer) handleLogin(c *gin.Context) {
+	var req LoginReqObject
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Failed to Login": err.Error()})
+		return
+	}
+
+	token , err := s.usersService.AuthenticationLogin(req.EmployeeId, req.Password)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+    c.JSON(http.StatusOK, gin.H{"token": token})
+
+}
+
 
 // func generateSecureRandomID(length int) (string, error) {
 // 	bytes := make([]byte, length)
