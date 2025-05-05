@@ -53,7 +53,7 @@ func (s *UserService) CreateUser(user User) error {
 	RETURNING uid;
 	`
 	var userID string
-	log.Println("Creating user with status:", user.UserStatus, "and employee ID:", user.EmployeeId, "and userPassword", user.Password)
+	
 	// Generate a secure password hash
 	passwordHash, err := HashPassword(user.Password)
 	if err != nil {
