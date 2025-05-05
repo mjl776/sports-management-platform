@@ -19,3 +19,5 @@ curl localhost:3000/create-team-employee --include --header "Content-Type: appli
 
 curl localhost:3000/create-user --include --header "Content-Type: application/json" -d @test/new_user_test_create.json --request "POST"
 
+curl localhost:3000/login --include --header "Content-Type: application/json" -d @test/login_test.json --request "POST"
+

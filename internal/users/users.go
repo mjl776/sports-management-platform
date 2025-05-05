@@ -8,7 +8,7 @@ import (
 type User struct {
 	UserStatus string `json:"user_status"`
 	EmployeeId string `json:"employee_id"`
-	Password string `json:"password_hash"`
+	Password string `json:"password"`
 }
 
 type UserService struct {
@@ -53,7 +53,7 @@ func (s *UserService) CreateUser(user User) error {
 	RETURNING uid;
 	`
 	var userID string
-	log.Println("Creating user with status:", user.UserStatus, "and employee ID:", user.EmployeeId)
+	log.Println("Creating user with status:", user.UserStatus, "and employee ID:", user.EmployeeId, "and userPassword", user.Password)
 	// Generate a secure password hash
 	passwordHash, err := HashPassword(user.Password)
 	if err != nil {
