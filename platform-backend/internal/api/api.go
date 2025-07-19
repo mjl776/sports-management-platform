@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/mjl776/sports-management-platform/internal/employees"
 	"github.com/mjl776/sports-management-platform/internal/leagues"
@@ -72,6 +74,14 @@ func NewAPIServer(listenAddr string,
 func (s *APIServer) Run() {
 
 	router := gin.Default()
+	// Enable CORS
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 	router.POST("/create-team", s.handleCreateTeam)
 	router.POST("/create-league", s.handleCreateLeague)
 	router.POST("/create-team-employee", s.handleCreateTeamEmployee)
