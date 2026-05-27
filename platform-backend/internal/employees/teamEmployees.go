@@ -4,18 +4,19 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"math/rand"
 	"time"
+
+	"github.com/mjl776/sports-management-platform/internal/utils"
 )
 
 type TeamEmployees struct {
+	ID int  `json:"id"`
 	EmployeeID   string `json:"employee_id"`
 	EmployeeName string `json:"employee_name"`
 	CreatedAt  string `json:"created_at"`
 	UpdatedAt  string `json:"updated_at"`
 	EmployeeTitle string `json:"employee_title"`
-	SalaryPerHour float64 `json:"salary_per_hour"`
-	EmployerID int `json:"employer_id"`
+	EmployerID string `json:"employer_id"`
 }
 
 type TeamEmployeesService struct {
@@ -28,11 +29,13 @@ func NewTeamEmployeesService(db *sql.DB) *TeamEmployeesService {
 	}
 }
 
-func NewTeamEmployeesObject(employeeName string, employeeTitle string, salaryPerHour float64, employerID int) *TeamEmployees {
+func NewTeamEmployeesObject(employeeName string, employeeTitle string, employerID string) *TeamEmployees {
+	employeeID := util.GenerateRandomULID()
+
 	return &TeamEmployees{
+		EmployeeID: employeeID.String(),
 		EmployeeName: employeeName,
 		EmployeeTitle: employeeTitle,
-		SalaryPerHour: salaryPerHour,
 		EmployerID: employerID,
 	}
 }
@@ -40,17 +43,16 @@ func NewTeamEmployeesObject(employeeName string, employeeTitle string, salaryPer
 func (s *TeamEmployeesService) CreateTeamsEmployeesTable() error {
 	createEmployeesTableQuery := `
 	CREATE TABLE IF NOT EXISTS team_employees (
-		employee_id VARCHAR(30) PRIMARY KEY,
+	    id SERIAL PRIMARY KEY,
+		employee_id VARCHAR(26) NOT NULL UNIQUE,
 		employee_name VARCHAR(100) NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		employee_title VARCHAR(50) NOT NULL,
-		salary_per_hour DECIMAL(10, 2) NOT NULL,
-		employer_id INT NOT NULL,
-		FOREIGN KEY (employer_id) REFERENCES teams(id),
-		CHECK (employee_id ~ '^t[0-9]+$')
-	)`
-
+		employer_id VARCHAR(26),
+		FOREIGN KEY (employer_id) REFERENCES teams(team_id)
+	);
+`
 	_, err := s.db.Exec(createEmployeesTableQuery)
 	if err != nil {
 		return err
@@ -63,25 +65,19 @@ func (s *TeamEmployeesService) CreateEmployee(employee TeamEmployees) error {
 	// Print current employee
 	fmt.Println("Creating employee with name:", employee.EmployeeName,
 	 "and title:", employee.EmployeeTitle,
-	 "and salary:", employee.SalaryPerHour, "and employer ID:", employee.EmployerID)
+	 "and employer ID:", employee.EmployerID)
 
 	insertEmployeeQuery := `
-	INSERT INTO team_employees (employee_id, employee_name, created_at, updated_at, employee_title, salary_per_hour, employer_id)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
-	RETURNING employee_id;`
+	INSERT INTO team_employees (employee_id, employee_name, created_at, updated_at, employee_title, employer_id)
+	VALUES ($1, $2, $3, $4, $5, $6)
+	RETURNING id;`
 
 	currentTimestamp := time.Now().Format("2006-01-02 15:04:05")
-	employeeID := generateRandomEmployeeID()
 
-	err := s.db.QueryRow(insertEmployeeQuery, "t" + employeeID, employee.EmployeeName,
-		currentTimestamp, currentTimestamp, employee.EmployeeTitle, employee.SalaryPerHour, employee.EmployerID).Scan(&employeeID)
+	err := s.db.QueryRow(insertEmployeeQuery, employee.EmployeeID, employee.EmployeeName,
+		currentTimestamp, currentTimestamp, employee.EmployeeTitle, employee.EmployerID).Scan(&employee.ID)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func generateRandomEmployeeID() string {
-    r := rand.New(rand.NewSource(time.Now().UnixNano()))
-    return fmt.Sprintf("%06d", r.Intn(1000000)) // Generates a 6-digit random number
 }
