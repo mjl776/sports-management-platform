@@ -4,13 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+    "github.com/mjl776/sports-management-platform/internal/utils"
 
 	_ "github.com/lib/pq"
 )
 
 type Team struct {
+	ID int  `json:"id"`
+	TeamID string `json:"team_id"`
 	Name string `json:"name"`
-	LeagueID int `json:"league_id"`
+	LeagueID string `json:"league_id"`
 }
 
 type TeamsService struct {
@@ -23,10 +26,14 @@ func NewTeamsService(db *sql.DB) *TeamsService {
 	}
 }
 
-func NewTeamObject(name string, leagueId int) *Team {
+func NewTeamObject(name string, leagueId string) *Team {
+
+	teamID := util.GenerateRandomULID()
+
 	return &Team{
 		Name: name,
 		LeagueID: leagueId,
+		TeamID: teamID.String(),
 	}
 }
 
@@ -34,9 +41,10 @@ func (s *TeamsService) CreateTeamsTable() error {
 	createTeamsTableSQL := `
 	CREATE TABLE IF NOT EXISTS teams (
 		id SERIAL PRIMARY KEY,
+		team_id VARCHAR(26) NOT NULL UNIQUE,
 		name VARCHAR(100) NOT NULL,
-		league_id INT NOT NULL,
-		FOREIGN KEY (league_id) REFERENCES leagues(id)
+		league_id VARCHAR(26) NOT NULL,
+		FOREIGN KEY (league_id) REFERENCES leagues(league_id)
 	);
 	`
 
@@ -51,15 +59,15 @@ func (s *TeamsService) CreateTeamsTable() error {
 
 func (s *TeamsService) CreateTeam(team Team) error {
 	insertTeamSQL := `
-	INSERT INTO teams (name, league_id)
-	VALUES ($1, $2)
+	INSERT INTO teams (team_id, name, league_id)
+	VALUES ($1, $2, $3)
 	RETURNING id;
 	`
-	var teamID int
+
 	fmt.Println("Creating team with name:", team.Name, "and league ID:", team.LeagueID)
 
 	// Execute the SQL statement
-	err := s.db.QueryRow(insertTeamSQL, team.Name, team.LeagueID).Scan(&teamID)
+	err := s.db.QueryRow(insertTeamSQL, team.TeamID, team.Name, team.LeagueID).Scan(&team.ID)
 	if err != nil {
 		log.Fatalf("Failed to create team: %v", err)
 		return err

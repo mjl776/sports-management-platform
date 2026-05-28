@@ -12,6 +12,7 @@ import (
 	"github.com/mjl776/sports-management-platform/internal/leagues"
 	"github.com/mjl776/sports-management-platform/internal/teams"
 	"github.com/mjl776/sports-management-platform/internal/users"
+	"github.com/mjl776/sports-management-platform/internal/players"
 )
 
 type APIServer struct {
@@ -20,11 +21,12 @@ type APIServer struct {
 	teamsService *teams.TeamsService
 	teamEmployeesService *employees.TeamEmployeesService
 	usersService *users.UserService
+	playersService *players.PlayerService
 }
 
 type CreateTeamReqObject struct {
 	Name string `json:"name"`
-	LeagueID int `json:"league_id"`
+	LeagueID string `json:"league_id"`
 }
 
 type CreateLeagueReqObject struct {
@@ -32,17 +34,21 @@ type CreateLeagueReqObject struct {
 	Sport string `json:"sport"`
 }
 
-type CreatTeamEmployeeReqObject struct {
+type CreateTeamEmployeeReqObject struct {
 	EmployeeName string `json:"employee_name"`
 	EmployeeTitle string `json:"employee_title"`
-	SalaryPerHour float64 `json:"salary_per_hour"`
-	EmployerID int `json:"employer_id"`
+	EmployerID string `json:"employer_id"`
 }
 
 type CreateUserReqObject struct {
 	UserStatus string `json:"user_status"`
 	EmployeeId string `json:"employee_id"`
 	Password string `json:"password"`
+}
+
+type CreatePlayerReqObject struct {
+	Name string `json:"name"`
+	TeamID int `json:"team_id"`
 }
 
 type LoginReqObject struct {
@@ -61,6 +67,7 @@ func NewAPIServer(listenAddr string,
 		teamsService *teams.TeamsService,
 		teamEmployeesService *employees.TeamEmployeesService,
 		usersService *users.UserService,
+		playersService *players.PlayerService,
 	) *APIServer {
 	return &APIServer{
 		listenAddr:     listenAddr,
@@ -68,6 +75,7 @@ func NewAPIServer(listenAddr string,
 		teamEmployeesService: teamEmployeesService,
 		teamsService: teamsService,
 		usersService: usersService,
+		playersService: playersService,
 	}
 }
 
@@ -86,6 +94,7 @@ func (s *APIServer) Run() {
 	router.POST("/create-league", s.handleCreateLeague)
 	router.POST("/create-team-employee", s.handleCreateTeamEmployee)
 	router.POST("/create-user", s.handleCreateUser)
+	router.POST("/create-player", s.handleCreatePlayer)
 	router.POST("/login", s.handleLogin)
 	log.Println("JSON API server running on port: ", s.listenAddr)
 	err := http.ListenAndServe(s.listenAddr, router)
@@ -117,6 +126,10 @@ func (s *APIServer) handleCreateTeam(c *gin.Context) {
 func (s *APIServer) handleCreateLeague(c *gin.Context) {
 
 	var req CreateLeagueReqObject
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	league := leagues.NewLeagueObject(req.Name, req.Sport)
 	err := s.leagueService.CreateLeague(*league)
@@ -130,13 +143,13 @@ func (s *APIServer) handleCreateLeague(c *gin.Context) {
 }
 
 func (s *APIServer) handleCreateTeamEmployee(c *gin.Context) {
-	var req CreatTeamEmployeeReqObject
+	var req CreateTeamEmployeeReqObject
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	employee := employees.NewTeamEmployeesObject(req.EmployeeName, req.EmployeeTitle, req.SalaryPerHour, req.EmployerID)
+	employee := employees.NewTeamEmployeesObject(req.EmployeeName, req.EmployeeTitle, req.EmployerID)
 	err := s.teamEmployeesService.CreateEmployee(*employee)
 
 	if err != nil {
@@ -185,12 +198,20 @@ func (s *APIServer) handleLogin(c *gin.Context) {
 
 }
 
+func (s *APIServer) handleCreatePlayer(c *gin.Context) {
+	var req CreatePlayerReqObject
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-// func generateSecureRandomID(length int) (string, error) {
-// 	bytes := make([]byte, length)
-// 	_, err := rand.Read(bytes)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return base64.URLEncoding.EncodeToString(bytes), nil
-// }
+	player := players.NewPlayerObject(req.Name, req.TeamID)
+	err := s.playersService.CreatePlayer(*player)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create player."})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, player)
+}
