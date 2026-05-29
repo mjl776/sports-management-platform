@@ -4,27 +4,37 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+    "os"
 
 	_ "github.com/lib/pq"
+    "github.com/joho/godotenv"
 	"github.com/mjl776/sports-management-platform/internal/api"
 	"github.com/mjl776/sports-management-platform/internal/employees"
 	"github.com/mjl776/sports-management-platform/internal/leagues"
 	"github.com/mjl776/sports-management-platform/internal/teams"
 	"github.com/mjl776/sports-management-platform/internal/users"
     "github.com/mjl776/sports-management-platform/internal/players"
+    "github.com/mjl776/sports-management-platform/internal/player-contracts"
 )
 
 func main() {
 
-    const (
+    // Load environment variables
+    err := godotenv.Load()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
+
+    var (
         host = "localhost"
         port = 5432
-		password = ""
-		db_name = ""
+        password = os.Getenv("DB_PASSWORD")
+        db_name = os.Getenv("DB_NAME")
+        user = os.Getenv("DB_USER")
     )
 
     // Connect to the database
-    pqsqlconn := fmt.Sprintf("host=%s port=%d password=%s dbname=%s sslmode=disable", host, port, password, db_name)
+    pqsqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, db_name)
     db, err := sql.Open("postgres", pqsqlconn)
 
     if err != nil {
@@ -46,6 +56,7 @@ func main() {
 	usersService := users.NewUserService(db)
 	teamsEmployeeService := employees.NewTeamEmployeesService(db)
     playersService := players.NewPlayerService(db)
+    playerContractService := playerContracts.NewPlayerContractService(db)
 
     // Create the leagues table
     if err := leaguesService.CreateLeaguesTable(); err != nil {
@@ -71,7 +82,18 @@ func main() {
         log.Fatalf("Failed to create players table: %v", err)
     }
 
-    server := api.NewAPIServer(":3000", leaguesService, teamsService, teamsEmployeeService, usersService, playersService);
+    if err := playerContractService.CreatePlayerContractsTable(db); err != nil {
+        log.Fatalf("Failed to create player contracts table: %v", err)
+    }
+
+    server := api.NewAPIServer(":8080",
+                leaguesService,
+                teamsService,
+                teamsEmployeeService,
+                usersService,
+                playersService,
+                playerContractService,
+            );
     server.Run();
 
 }

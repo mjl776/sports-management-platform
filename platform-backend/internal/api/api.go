@@ -13,6 +13,7 @@ import (
 	"github.com/mjl776/sports-management-platform/internal/teams"
 	"github.com/mjl776/sports-management-platform/internal/users"
 	"github.com/mjl776/sports-management-platform/internal/players"
+	"github.com/mjl776/sports-management-platform/internal/player-contracts"
 )
 
 type APIServer struct {
@@ -22,6 +23,7 @@ type APIServer struct {
 	teamEmployeesService *employees.TeamEmployeesService
 	usersService *users.UserService
 	playersService *players.PlayerService
+	playerContractService *playerContracts.PlayerContractService
 }
 
 type CreateTeamReqObject struct {
@@ -48,7 +50,15 @@ type CreateUserReqObject struct {
 
 type CreatePlayerReqObject struct {
 	Name string `json:"name"`
-	TeamID int `json:"team_id"`
+	TeamID string `json:"team_id"`
+}
+
+type CreatePlayerContractObject struct {
+	PlayerID string `json:"player_id"`
+	TeamID string `json:"team_id"`
+	ContractType string `json:"contract_type"`
+	ContractLength int `json:"contract_length"`
+	Salary float64 `json:"salary"`
 }
 
 type LoginReqObject struct {
@@ -68,6 +78,7 @@ func NewAPIServer(listenAddr string,
 		teamEmployeesService *employees.TeamEmployeesService,
 		usersService *users.UserService,
 		playersService *players.PlayerService,
+		playerContractService *playerContracts.PlayerContractService,
 	) *APIServer {
 	return &APIServer{
 		listenAddr:     listenAddr,
@@ -76,6 +87,7 @@ func NewAPIServer(listenAddr string,
 		teamsService: teamsService,
 		usersService: usersService,
 		playersService: playersService,
+		playerContractService: playerContractService,
 	}
 }
 
@@ -84,7 +96,7 @@ func (s *APIServer) Run() {
 	router := gin.Default()
 	// Enable CORS
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{"http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -95,6 +107,7 @@ func (s *APIServer) Run() {
 	router.POST("/create-team-employee", s.handleCreateTeamEmployee)
 	router.POST("/create-user", s.handleCreateUser)
 	router.POST("/create-player", s.handleCreatePlayer)
+	router.POST("/create-player-contract", s.handleCreatePlayerContract)
 	router.POST("/login", s.handleLogin)
 	log.Println("JSON API server running on port: ", s.listenAddr)
 	err := http.ListenAndServe(s.listenAddr, router)
@@ -214,4 +227,22 @@ func (s *APIServer) handleCreatePlayer(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, player)
+}
+
+func (s *APIServer) handleCreatePlayerContract(c *gin.Context) {
+	var req CreatePlayerContractObject
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	playerContract := playerContracts.NewPlayerContractObject(req.PlayerID, req.Salary, req.ContractType, req.ContractLength, req.TeamID)
+	err := s.playerContractService.CreatePlayerContract(*playerContract)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create player contract."})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, playerContract);
 }

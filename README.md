@@ -11,17 +11,16 @@ Test
 
 Create Team Test Curl Request
 
-curl localhost:3000/create-team --include --header "Content-Type: application/json" -d @test/teams_test_create.json --request "POST"
+curl localhost:8080/create-team --include --header "Content-Type: application/json" -d @test/teams_test_create.json --request "POST"
 
 Create Teams Employee Curl Request
 
-curl localhost:3000/create-team-employee --include --header "Content-Type: application/json" -d @test/new_employee_test_create.json --request "POST"
+curl localhost:8080/create-team-employee --include --header "Content-Type: application/json" -d @test/new_employee_test_create.json --request "POST"
 
-curl localhost:3000/create-user --include --header "Content-Type: application/json" -d @test/new_user_test_create.json --request "POST"
+curl localhost:8080/create-user --include --header "Content-Type: application/json" -d @test/new_user_test_create.json --request "POST"
 
-curl localhost:3000/create-player --include --header "Content-Type: application/json" -d @test/new_player_test_create.json --request "POST"
+curl localhost:8080/create-player --include --header "Content-Type: application/json" -d @test/new_player_test_create.json --request "POST"
 
-curl localhost:3000/create-league --include --header "Content-Type: application/json" -d @test/new_league_test_create.json --request "POST"
+curl localhost:8080/create-player-contract --include --header "Content-Type: application/json" -d @test/new_player_contract_create.json --request "POST"
 
-curl localhost:3000/login --include --header "Content-Type: application/json" -d @test/login_test.json --request "POST"
-
+curl localhost:8080/login --include --header "Content-Type: application/json" -d @test/login_test.json --request "POST"
