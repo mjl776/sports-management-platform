@@ -11,7 +11,7 @@ type Player struct {
 	ID int  `json:"id"`
 	PlayerID string `json:"player_id"`
 	Name string `json:"name"`
-	TeamID int `json:"team_id"`
+	TeamID string `json:"team_id"`
 }
 
 type PlayerService struct {
@@ -30,7 +30,7 @@ func (s *PlayerService) CreatePlayersTable(db *sql.DB) error {
 		id SERIAL PRIMARY KEY,
 		player_id VARCHAR(26) NOT NULL UNIQUE,
 		name VARCHAR(100) NOT NULL,
-		team_id INT NOT NULL
+		team_id VARCHAR(26) NOT NULL
 	);
 	`
 
@@ -56,7 +56,7 @@ func (s *PlayerService) CreatePlayer (player Player) error {
 	return nil
 }
 
-func NewPlayerObject(name string, teamID int) *Player {
+func NewPlayerObject(name string, teamID string) *Player {
 
 	playerID := util.GenerateRandomULID()
 
