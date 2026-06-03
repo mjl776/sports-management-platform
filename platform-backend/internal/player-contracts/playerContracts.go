@@ -36,7 +36,7 @@ func (s *PlayerContractService) CreatePlayerContractsTable(db *sql.DB) error {
 		salary NUMERIC(15, 2) NOT NULL,
 		contract_type VARCHAR(50) NOT NULL,
 		contract_length INT NOT NULL,
-		team_id VARCHAR(26) NOT NULL
+		team_id VARCHAR(26) NOT NULL,
 		FOREIGN KEY (player_id) REFERENCES players(player_id),
     	FOREIGN KEY (team_id) REFERENCES teams(team_id)
 	);
