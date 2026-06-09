@@ -32,7 +32,7 @@ func (s *PlayerService) CreatePlayersTable(db *sql.DB) error {
 		name VARCHAR(100) NOT NULL,
 		team_id VARCHAR(26) NOT NULL,
 		user_id VARCHAR(26),
-		FOREIGN KEY (user_id) REFERENCES users(user_id);
+		FOREIGN KEY (user_id) REFERENCES users(user_id)
 	);
 	`
 
