@@ -9,6 +9,7 @@ type User struct {
 	UserStatus string `json:"user_status"`
 	EmployeeId string `json:"employee_id"`
 	Password string `json:"password"`
+	Email string `json:"email"`
 }
 
 type UserService struct {
@@ -32,9 +33,9 @@ func NewUserObject(userStatus, employeeid, password string) *User {
 func (s *UserService) CreateUsersTable() error {
 	createUserTableQuery := `
 	CREATE TABLE IF NOT EXISTS users (
-		uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		user_status VARCHAR(30) NOT NULL,
 		employee_id VARCHAR(30) NOT NULL,
+		email VARCHAR(255) NOT NULL UNIQUE,
         password_hash BYTEA NOT NULL
 	)`
 
@@ -48,12 +49,12 @@ func (s *UserService) CreateUsersTable() error {
 
 func (s *UserService) CreateUser(user User) error {
 	insertUserQuery := `
-	INSERT INTO users (user_status, employee_id, password_hash)
-	VALUES ($1, $2, $3)
+	INSERT INTO users (user_status, employee_id, password_hash, email)
+	VALUES ($1, $2, $3, $4)
 	RETURNING uid;
 	`
 	var userID string
-	
+
 	// Generate a secure password hash
 	passwordHash, err := HashPassword(user.Password)
 	if err != nil {
@@ -61,7 +62,7 @@ func (s *UserService) CreateUser(user User) error {
 	}
 
 	// Insert the user into the database
-	if err := s.db.QueryRow(insertUserQuery, user.UserStatus, user.EmployeeId, passwordHash).Scan(&userID); err != nil {
+	if err := s.db.QueryRow(insertUserQuery, user.UserStatus, user.EmployeeId, passwordHash, user.Email).Scan(&userID); err != nil {
 		log.Println("Error creating user:", err)
 	}
 

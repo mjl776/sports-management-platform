@@ -22,15 +22,15 @@ func HashPassword(password string) ([]byte, error) {
 	return hashedPassword, nil
 }
 
-func (s *UserService) VerifyPasswordAndUserStatus(employeeID, plainPassword string) (string, error) {
+func (s *UserService) VerifyPasswordAndUserStatus(email, plainPassword string) (string, error) {
     var hashedPassword []byte
 
 	// Trim any leading or trailing whitespace from the employee ID and password
 	plainPassword = strings.TrimSpace(plainPassword)
 
     // Retrieve the hashed password from the database
-    passQuery := `SELECT password_hash FROM users WHERE employee_id = $1`
-    if err := s.db.QueryRow(passQuery, employeeID).Scan(&hashedPassword); err != nil {
+    passQuery := `SELECT password_hash FROM users WHERE email = $1`
+    if err := s.db.QueryRow(passQuery, email).Scan(&hashedPassword); err != nil {
         return "", fmt.Errorf("failed to retrieve password hash: %w", err)
     }
 
@@ -41,8 +41,8 @@ func (s *UserService) VerifyPasswordAndUserStatus(employeeID, plainPassword stri
 
 	var userStatus string
 	// Retrieve the user status from the database
-	userStatusQuery := `SELECT user_status FROM users WHERE employee_id = $1`
-	if 	err := s.db.QueryRow(userStatusQuery, employeeID).Scan(&userStatus); err != nil{
+	userStatusQuery := `SELECT user_status FROM users WHERE email = $1`
+	if 	err := s.db.QueryRow(userStatusQuery, email).Scan(&userStatus); err != nil{
 		return "", fmt.Errorf("failed to retrieve user status: %w", err)
 	}
 	return userStatus, nil
@@ -50,16 +50,16 @@ func (s *UserService) VerifyPasswordAndUserStatus(employeeID, plainPassword stri
 }
 
 
-func (s *UserService) AuthenticationLogin(employeeID, password string) (string, error) {
+func (s *UserService) AuthenticationLogin(email, password string) (string, error) {
 	var err error
 	// check if password authentication works exist
-	userStatus, err := s.VerifyPasswordAndUserStatus(employeeID, password)
+	userStatus, err := s.VerifyPasswordAndUserStatus(email, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to verify password: %w", err)
 	}
 
 	// Generate JWT token
-	token, err := s.GenerateJWT(employeeID, userStatus)
+	token, err := s.GenerateJWT(email, userStatus)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate JWT token: %w", err)
 	}
