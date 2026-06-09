@@ -50,6 +50,8 @@ func (s *TeamEmployeesService) CreateTeamsEmployeesTable() error {
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		employee_title VARCHAR(50) NOT NULL,
 		employer_id VARCHAR(26),
+		user_id VARCHAR(26),
+		FOREIGN KEY (user_id) REFERENCES users(user_id);
 		FOREIGN KEY (employer_id) REFERENCES teams(team_id)
 	);
 `
