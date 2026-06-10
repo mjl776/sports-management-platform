@@ -30,7 +30,9 @@ func (s *PlayerService) CreatePlayersTable(db *sql.DB) error {
 		id SERIAL PRIMARY KEY,
 		player_id VARCHAR(26) NOT NULL UNIQUE,
 		name VARCHAR(100) NOT NULL,
-		team_id VARCHAR(26) NOT NULL
+		team_id VARCHAR(26) NOT NULL,
+		user_id VARCHAR(26),
+		FOREIGN KEY (user_id) REFERENCES users(user_id)
 	);
 	`
 

@@ -3,12 +3,15 @@ package users
 import (
 	"database/sql"
 	"log"
+
+	util "github.com/mjl776/sports-management-platform/internal/utils"
 )
 
 type User struct {
 	UserStatus string `json:"user_status"`
-	EmployeeId string `json:"employee_id"`
+	UserID string `json:"user_id"`
 	Password string `json:"password"`
+	Email string `json:"email"`
 }
 
 type UserService struct {
@@ -21,10 +24,14 @@ func NewUserService(db *sql.DB) *UserService {
 	}
 }
 
-func NewUserObject(userStatus, employeeid, password string) *User {
+func NewUserObject(userStatus, email, password string) *User {
+
+	userId := util.GenerateRandomULID()
+
 	return &User {
 		UserStatus: userStatus,
-		EmployeeId: employeeid,
+		UserID: userId.String(),
+		Email: email,
 		Password: password,
 	}
 }
@@ -32,9 +39,10 @@ func NewUserObject(userStatus, employeeid, password string) *User {
 func (s *UserService) CreateUsersTable() error {
 	createUserTableQuery := `
 	CREATE TABLE IF NOT EXISTS users (
-		uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		id SERIAL PRIMARY KEY,
+		user_id VARCHAR(26) NOT NULL UNIQUE,
 		user_status VARCHAR(30) NOT NULL,
-		employee_id VARCHAR(30) NOT NULL,
+		email VARCHAR(255) NOT NULL UNIQUE,
         password_hash BYTEA NOT NULL
 	)`
 
@@ -48,12 +56,12 @@ func (s *UserService) CreateUsersTable() error {
 
 func (s *UserService) CreateUser(user User) error {
 	insertUserQuery := `
-	INSERT INTO users (user_status, employee_id, password_hash)
-	VALUES ($1, $2, $3)
-	RETURNING uid;
+	INSERT INTO users (user_status, user_id, password_hash, email)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id;
 	`
 	var userID string
-	
+
 	// Generate a secure password hash
 	passwordHash, err := HashPassword(user.Password)
 	if err != nil {
@@ -61,7 +69,7 @@ func (s *UserService) CreateUser(user User) error {
 	}
 
 	// Insert the user into the database
-	if err := s.db.QueryRow(insertUserQuery, user.UserStatus, user.EmployeeId, passwordHash).Scan(&userID); err != nil {
+	if err := s.db.QueryRow(insertUserQuery, user.UserStatus, user.UserID, passwordHash, user.Email).Scan(&userID); err != nil {
 		log.Println("Error creating user:", err)
 	}
 

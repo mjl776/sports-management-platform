@@ -44,7 +44,7 @@ type CreateTeamEmployeeReqObject struct {
 
 type CreateUserReqObject struct {
 	UserStatus string `json:"user_status"`
-	EmployeeId string `json:"employee_id"`
+	Email string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -62,7 +62,7 @@ type CreatePlayerContractObject struct {
 }
 
 type LoginReqObject struct {
-	EmployeeId string `json:"employee_id"`
+	Email string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -96,12 +96,13 @@ func (s *APIServer) Run() {
 	router := gin.Default()
 	// Enable CORS
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8081"},
+		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
-	}))
+	}));
+
 	router.POST("/create-team", s.handleCreateTeam)
 	router.POST("/create-league", s.handleCreateLeague)
 	router.POST("/create-team-employee", s.handleCreateTeamEmployee)
@@ -180,9 +181,9 @@ func (s *APIServer) handleCreateUser(c *gin.Context) {
 		return
 	}
 
-	log.Printf("UserStatus: %s, EmployeeID: %s, Password: %s", req.UserStatus, req.EmployeeId, req.Password)
+	log.Printf("UserStatus: %s, EmployeeID: %s, Password: %s", req.UserStatus, req.Email, req.Password)
 
-	user := users.NewUserObject(req.UserStatus, req.EmployeeId, req.Password)
+	user := users.NewUserObject(req.UserStatus, req.Email, req.Password)
 	err := s.usersService.CreateUser(*user)
 
 	if err != nil {
@@ -201,7 +202,7 @@ func (s *APIServer) handleLogin(c *gin.Context) {
 		return
 	}
 
-	token , err := s.usersService.AuthenticationLogin(req.EmployeeId, req.Password)
+	token , err := s.usersService.AuthenticationLogin(req.Email, req.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

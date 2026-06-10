@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [employeeId, setEmployeeId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,7 +22,7 @@ export default function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          employee_id: employeeId,
+          email: email,
           password: password,
         }),
       });
@@ -56,9 +56,9 @@ export default function LoginPage() {
               <input
                 type="text"
                 required
-                placeholder="Employee ID"
-                value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
+                placeholder="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>

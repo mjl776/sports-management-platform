@@ -22,44 +22,38 @@ func HashPassword(password string) ([]byte, error) {
 	return hashedPassword, nil
 }
 
-func (s *UserService) VerifyPasswordAndUserStatus(employeeID, plainPassword string) (string, error) {
+func (s *UserService) VerifyPasswordAndUserStatus(email, plainPassword string) (string, string, error) {
+    email = strings.TrimSpace(strings.ToLower(email))
+    plainPassword = strings.TrimSpace(plainPassword)
+
     var hashedPassword []byte
-
-	// Trim any leading or trailing whitespace from the employee ID and password
-	plainPassword = strings.TrimSpace(plainPassword)
-
-    // Retrieve the hashed password from the database
-    passQuery := `SELECT password_hash FROM users WHERE employee_id = $1`
-    if err := s.db.QueryRow(passQuery, employeeID).Scan(&hashedPassword); err != nil {
-        return "", fmt.Errorf("failed to retrieve password hash: %w", err)
+    var userStatus string
+    var userID string
+	fmt.Printf("Verifying user with email: %s\n", email)
+    query := `SELECT user_id, password_hash, user_status FROM users WHERE email = $1`
+    err := s.db.QueryRow(query, email).Scan(&userID, &hashedPassword, &userStatus)
+    if err != nil {
+        return "", "", fmt.Errorf("failed to retrieve user: %w", err)
     }
 
-    // Compare the hashed password with the plain password
-	if err := bcrypt.CompareHashAndPassword(hashedPassword, []byte(plainPassword)); err != nil && hashedPassword != nil {
-        return "", fmt.Errorf("invalid password: %w", err)
+    if err := bcrypt.CompareHashAndPassword(hashedPassword, []byte(plainPassword)); err != nil {
+        return "", "", fmt.Errorf("invalid password")
     }
 
-	var userStatus string
-	// Retrieve the user status from the database
-	userStatusQuery := `SELECT user_status FROM users WHERE employee_id = $1`
-	if 	err := s.db.QueryRow(userStatusQuery, employeeID).Scan(&userStatus); err != nil{
-		return "", fmt.Errorf("failed to retrieve user status: %w", err)
-	}
-	return userStatus, nil
-
+    return userID, userStatus, nil
 }
 
 
-func (s *UserService) AuthenticationLogin(employeeID, password string) (string, error) {
+func (s *UserService) AuthenticationLogin(email, password string) (string, error) {
 	var err error
 	// check if password authentication works exist
-	userStatus, err := s.VerifyPasswordAndUserStatus(employeeID, password)
+	userStatus, userId, err := s.VerifyPasswordAndUserStatus(email, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to verify password: %w", err)
 	}
 
 	// Generate JWT token
-	token, err := s.GenerateJWT(employeeID, userStatus)
+	token, err := s.GenerateJWT(userId, userStatus)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate JWT token: %w", err)
 	}
@@ -70,11 +64,11 @@ func (s *UserService) AuthenticationLogin(employeeID, password string) (string, 
 }
 
 
-func (s *UserService) GenerateJWT(employeeID, role string) (string, error) {
+func (s *UserService) GenerateJWT(userId, userStatus string) (string, error) {
 	// Create a new JWT token
 	claims := jwt.MapClaims{
-        "employee_id": employeeID,
-        "role":        role,
+        "user_id": userId,
+        "role":        userStatus,
         "exp":         time.Now().Add(time.Hour * 24).Unix(),
     }
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
